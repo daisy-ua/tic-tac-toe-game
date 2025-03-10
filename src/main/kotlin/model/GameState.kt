@@ -1,4 +1,4 @@
-package com.daisy.models
+package com.daisy.model
 
 import kotlinx.serialization.Serializable
 

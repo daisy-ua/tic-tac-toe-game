@@ -1,7 +1,7 @@
 package com.daisy.game
 
-import com.daisy.models.GameState
-import com.daisy.models.Player
+import com.daisy.model.GameState
+import com.daisy.model.Player
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -99,7 +99,7 @@ class GameSession {
 
         for (i in board.indices) {
             if (board[i].all { it != null && it == board[i][0] }) {
-                board[i][0]
+                return board[i][0]
             }
 
             if (board.all { it[i] != null && it[i] == board[0][i] }) {

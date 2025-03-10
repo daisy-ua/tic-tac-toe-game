@@ -1,4 +1,4 @@
-package com.daisy.models
+package com.daisy.model
 
 enum class Player {
     X, O

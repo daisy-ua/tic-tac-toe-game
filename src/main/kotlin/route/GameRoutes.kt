@@ -1,7 +1,7 @@
-package com.daisy.routes
+package com.daisy.route
 
 import com.daisy.game.GameSession
-import com.daisy.models.Move
+import com.daisy.model.Move
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
