@@ -1,6 +1,7 @@
 package com.daisy.route
 
-import com.daisy.game.GameSession
+import com.daisy.game.GameService
+import com.daisy.game.RoomManager
 import com.daisy.model.Move
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
@@ -8,8 +9,8 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.json.Json
 
-fun Route.ticTacToeSocket(session: GameSession) {
-    webSocket("/game") {
+fun Route.ticTacToeSocket(session: GameService) {
+    webSocket("rooms/{roomId}/game") {
         val player = session.connectPlayer(this)
         if (player == null) {
             close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "The game is already full."))

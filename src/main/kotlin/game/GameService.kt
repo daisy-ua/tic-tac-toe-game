@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import java.util.concurrent.ConcurrentHashMap
 
-class GameSession {
+class GameService {
 
     private val state: MutableStateFlow<GameState> = MutableStateFlow(GameState())
     private val currentState: GameState get() = state.value
