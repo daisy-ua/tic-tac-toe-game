@@ -1,6 +1,5 @@
 package com.daisy.game
 
-import com.daisy.model.Player
 import java.util.concurrent.ConcurrentHashMap
 
 object RoomManager {
@@ -12,20 +11,8 @@ object RoomManager {
         return room
     }
 
-    fun joinRoom(roomId: String, player: Player): Boolean? {
-        val room = rooms[roomId]
-        return room?.let {
-            room.addPlayer(player)
-        }
-    }
-
-    fun leaveRoom(roomId: String, player: Player) {
-        rooms[roomId]?.let { room ->
-            room.removePlayer(player)
-            if (room.isEmpty) {
-                rooms.remove(roomId)
-            }
-        }
+    fun removeRoom(roomId: String) {
+        rooms.remove(roomId)
     }
 
     fun getRoom(roomId: String): Room? = rooms[roomId]

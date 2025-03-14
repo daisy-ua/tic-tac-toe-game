@@ -1,14 +1,11 @@
 package com.daisy.plugins
 
-import com.daisy.game.GameService
-import com.daisy.route.roomRoute
-import com.daisy.route.ticTacToeSocket
+import com.daisy.route.gameRoute
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
-fun Application.configureRouting(session: GameService) {
+fun Application.configureRouting() {
     routing {
-        roomRoute()
-        ticTacToeSocket(session)
+        gameRoute()
     }
 }

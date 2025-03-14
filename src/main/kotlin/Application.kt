@@ -1,6 +1,5 @@
 package com.daisy
 
-import com.daisy.game.GameService
 import com.daisy.plugins.configureRouting
 import com.daisy.plugins.configureSerialization
 import com.daisy.plugins.configureSockets
@@ -11,9 +10,7 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    val gameSession = GameService()
-
     configureSerialization()
     configureSockets()
-    configureRouting(gameSession)
+    configureRouting()
 }

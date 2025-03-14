@@ -1,29 +1,56 @@
 package com.daisy.route
 
 import com.daisy.game.RoomManager
-import com.daisy.model.Player
-import io.ktor.http.*
+import com.daisy.utils.extractAction
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
+import io.ktor.websocket.*
+import kotlinx.coroutines.channels.consumeEach
 
-fun Route.roomRoute() {
-//    create a new room
-    post("/rooms") {
-        val room = RoomManager.createRoom().also { RoomManager.joinRoom(it.id, Player.X) }
+fun Route.gameRoute() {
+
+    post("/room/create") {
+        val room = RoomManager.createRoom()
         call.respond((mapOf("roomId" to room.id)))
     }
 
-    post("/room/{roomId}/join") {
-        val roomId = call.parameters["roomId"] ?: return@post call.respond(HttpStatusCode.BadRequest, "Missing room ID")
+    webSocket("room/{roomId}/game") {
+        val roomId = call.parameters["roomId"] ?: return@webSocket close(
+            CloseReason(
+                CloseReason.Codes.CANNOT_ACCEPT,
+                "Missing room ID"
+            )
+        )
 
-        val player = Player.O
-        val isSuccess = RoomManager.joinRoom(roomId, player)
-        isSuccess?.let {
-            if (isSuccess) {
-                call.respond(HttpStatusCode.OK)
-            } else {
-                call.respond(HttpStatusCode.Forbidden, "Room is full")
+        val room = RoomManager.getRoom(roomId) ?: return@webSocket close(
+            CloseReason(
+                CloseReason.Codes.CANNOT_ACCEPT,
+                "Room ID is invalid"
+            )
+        )
+
+        val player = room.addPlayer(this) ?: return@webSocket close(
+            CloseReason(
+                CloseReason.Codes.VIOLATED_POLICY,
+                "Room is full"
+            )
+        )
+
+        try {
+            incoming.consumeEach { frame ->
+                if (frame is Frame.Text) {
+                    val action = extractAction(frame.readText())
+                    room.handleAction(player, action)
+                }
             }
-        } ?: call.respond(HttpStatusCode.NotFound, "Room ID is invalid")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            room.removePlayer(player)
+            if (room.isEmpty) {
+                RoomManager.removeRoom(roomId)
+            }
+        }
     }
 }

@@ -2,56 +2,19 @@ package com.daisy.game
 
 import com.daisy.model.GameState
 import com.daisy.model.Player
-import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.serialization.json.Json
-import java.util.concurrent.ConcurrentHashMap
 
-class GameService {
+class GameManager {
+    private val _state: MutableStateFlow<GameState> = MutableStateFlow(GameState())
+    val state: StateFlow<GameState> get() = _state
 
-    private val state: MutableStateFlow<GameState> = MutableStateFlow(GameState())
-    private val currentState: GameState get() = state.value
-
-    private val players = ConcurrentHashMap<Player, WebSocketSession>()
+    private val currentState: GameState get() = _state.value
 
     private val gameScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var delayNewSessionJob: Job? = null
-
-    init {
-        state.onEach(::broadcast).launchIn(gameScope)
-    }
-
-    //    Multiplayer mode
-    fun connectPlayer(session: WebSocketSession): Player? {
-        val player = if (currentState.connectedPlayers.contains(Player.X)) Player.O else Player.X
-
-        if (currentState.connectedPlayers.contains(player)) {
-            return null
-        }
-
-        state.update {
-            it.copy(
-                connectedPlayers = it.connectedPlayers + player
-            )
-        }
-
-        players[player] = session
-
-        return player
-    }
-
-    fun disconnectPlayer(player: Player) {
-        players.remove(player)
-        state.update {
-            it.copy(
-                connectedPlayers = it.connectedPlayers - player
-            )
-        }
-    }
 
     fun makeMove(player: Player, row: Int, col: Int) {
         val isMoveInvalid = currentState.run {
@@ -70,7 +33,7 @@ class GameService {
             startNewSessionDelayed()
         }
 
-        state.update {
+        _state.update {
             it.copy(
                 currentPlayer = switchPlayer(it.currentPlayer),
                 board = newBoard,
@@ -82,19 +45,11 @@ class GameService {
         }
     }
 
-    suspend fun broadcast(state: GameState) {
-        players.values.forEach { socket ->
-            socket.send(
-                Json.encodeToString(state)
-            )
-        }
-    }
-
-    private fun switchPlayer(current: Player): Player {
+    fun switchPlayer(current: Player): Player {
         return if (current == Player.X) Player.O else Player.X
     }
 
-    private fun checkWinner(): Player? {
+    fun checkWinner(): Player? {
         val board = currentState.board
 
         for (i in board.indices) {
@@ -113,7 +68,7 @@ class GameService {
 
         if (board.indices.all {
                 board[it][board.size - 1 - it] != null &&
-                board[it][board.size - 1 - it] == board[0][board.size - 1]
+                        board[it][board.size - 1 - it] == board[0][board.size - 1]
             }) {
             return board[0][board.size - 1]
         }
@@ -121,13 +76,25 @@ class GameService {
         return null
     }
 
-    private fun startNewSessionDelayed(timeInMillis: Long = 5000L) {
+    fun startNewSessionDelayed(timeInMillis: Long = 5000L) {
         delayNewSessionJob?.cancel()
         delayNewSessionJob = gameScope.launch {
             delay(timeInMillis)
-            state.update {
+            _state.update {
                 GameState(connectedPlayers = it.connectedPlayers)
             }
         }
+    }
+
+    fun updateState(update: GameState.() -> GameState) {
+        _state.update(update)
+    }
+
+    fun findAvailablePlayer(): Player? {
+        val player = if (currentState.connectedPlayers.contains(Player.X)) Player.O else Player.X
+
+        return if (currentState.connectedPlayers.contains(player)) {
+            null
+        } else player
     }
 }
