@@ -14,7 +14,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class Room(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String = generateRoomId(),
     private val gameManager: GameManager = GameManager(),
 ) {
     private val players: ConcurrentHashMap<Player, WebSocketSession> = ConcurrentHashMap<Player, WebSocketSession>()
@@ -60,5 +60,10 @@ class Room(
                 Json.encodeToString(state)
             )
         }
+    }
+
+    companion object {
+        private fun generateRoomId(length: Int = 8): String {
+            return UUID.randomUUID().toString().replace("-", "").take(length)        }
     }
 }
